@@ -9,10 +9,16 @@ type AliasDraft = { label: string; factor: string };
 type Props = {
   value: Ingredient | null;
   onChange: (i: Ingredient) => void;
+  /** Wenn keine Zutat ausgewählt ist, kann hier ein vorausgefüllter Suchtext stehen. */
+  initialQuery?: string;
 };
 
-export default function IngredientPicker({ value, onChange }: Props) {
-  const [q, setQ] = useState(value?.name ?? "");
+export default function IngredientPicker({
+  value,
+  onChange,
+  initialQuery,
+}: Props) {
+  const [q, setQ] = useState(value?.name ?? initialQuery ?? "");
   const [open, setOpen] = useState(false);
   const [results, setResults] = useState<Ingredient[]>([]);
   const [loading, setLoading] = useState(false);
@@ -20,8 +26,12 @@ export default function IngredientPicker({ value, onChange }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setQ(value?.name ?? "");
+    if (value) setQ(value.name);
   }, [value?.id, value?.name]);
+
+  useEffect(() => {
+    if (!value && initialQuery) setQ(initialQuery);
+  }, [initialQuery, value]);
 
   useEffect(() => {
     if (!open) return;
@@ -196,8 +206,8 @@ function NewIngredientForm({
     setLookupNote(`Werte übernommen aus „${r.name}".`);
   }
 
-  async function save(e: React.FormEvent) {
-    e.preventDefault();
+  async function save() {
+    if (!name.trim() || saving) return;
     setSaving(true);
     setError(null);
     try {
@@ -241,8 +251,20 @@ function NewIngredientForm({
 
   const primaryLabel = unit === "stk" ? "Stk" : unit;
 
+  // Wichtig: KEIN <form>-Element verwenden! Diese Komponente wird innerhalb
+  // des Rezept-Formulars gerendert. Verschachtelte Forms sind in HTML nicht
+  // erlaubt — Browser flatten sie und Submit-Buttons triggern dann das
+  // äußere Formular, was den Rezept-Speichern-Flow auslöst und alle Eingaben
+  // verschluckt.
   return (
-    <form onSubmit={save} className="p-3 space-y-2 text-sm">
+    <div
+      className="p-3 space-y-2 text-sm"
+      onKeyDown={(e) => {
+        if (e.key === "Enter" && (e.target as HTMLElement).tagName === "INPUT") {
+          e.preventDefault();
+        }
+      }}
+    >
       <div className="font-medium">Neue Zutat anlegen</div>
       <input
         value={name}
@@ -429,11 +451,12 @@ function NewIngredientForm({
       {error && <div className="text-xs text-red-600">{error}</div>}
       <div className="flex gap-2 pt-1">
         <button
-          type="submit"
+          type="button"
+          onClick={save}
           disabled={saving || !name.trim()}
           className="bg-accent text-white rounded px-3 py-1.5 text-xs disabled:opacity-50"
         >
-          Anlegen
+          {saving ? "Legt an…" : "Anlegen"}
         </button>
         <button
           type="button"
@@ -443,7 +466,7 @@ function NewIngredientForm({
           Abbrechen
         </button>
       </div>
-    </form>
+    </div>
   );
 }
 

@@ -7,6 +7,7 @@ Private Web-App für Wochenplanung, Rezeptverwaltung und Einkaufszettel. Single-
 ## Features (MVP)
 
 - **Rezepte** anlegen, bearbeiten, löschen — mit Zutaten, Portionen, Tags, Markdown-Zubereitung, Notizen.
+- **Rezept aus Text einlesen**: Freitext einfügen, Claude (Haiku 4.5) extrahiert Titel/Portionen/Zutaten/Zubereitung; Zutaten werden automatisch gegen die Stammdaten gematcht. Optional, braucht `ANTHROPIC_API_KEY`.
 - **Zutaten-Stammdaten** mit Autocomplete. Inline-Anlegen neuer Zutaten direkt im Rezept-Formular. Optionaler **Open-Food-Facts-Lookup** für Nährwerte (kcal, Protein, Kohlenhydrate, Fett pro 100 g/ml).
 - **Wochenplan** mit Mittag- und Abend-Slot pro Tag, Portionen pro Slot anpassbar, Wochen-Navigation.
 - **Einkaufszettel**:

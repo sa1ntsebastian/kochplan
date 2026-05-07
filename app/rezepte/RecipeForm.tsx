@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import IngredientPicker from "./IngredientPicker";
+import BulkImport, { type ParsedRecipeResult } from "./BulkImport";
 import type { Ingredient } from "@/lib/types";
 import { UNIT_LABELS } from "@/lib/categories";
 import { createRecipe, updateRecipe, deleteRecipe } from "./actions";
@@ -12,6 +13,7 @@ type Row = {
   ingredient: Ingredient | null;
   amount: string;
   unitLabel: string; // "" = primäre Einheit
+  pendingName?: string; // Vorausgefüllter Suchtext, wenn ingredient null ist (vom Parser)
 };
 
 const NEW_UNIT_TOKEN = "__NEW_UNIT__";
@@ -184,8 +186,46 @@ export default function RecipeForm({
     });
   }
 
+  function applyParsed(parsed: ParsedRecipeResult) {
+    setName(parsed.title);
+    if (parsed.servings && parsed.servings > 0) setServings(parsed.servings);
+    setInstructions(parsed.instructions);
+    setTagsInput(parsed.tags.join(", "));
+    setRows(
+      parsed.ingredients.map((p, i) => {
+        const amount = p.amount != null ? String(p.amount) : "";
+        if (p.matched) {
+          return {
+            key: `parsed-${i}-${Date.now()}`,
+            ingredient: p.matched,
+            amount,
+            unitLabel: p.suggested_unit_label ?? "",
+          };
+        }
+        return {
+          key: `parsed-${i}-${Date.now()}`,
+          ingredient: null,
+          amount,
+          unitLabel: "",
+          pendingName: p.name,
+        };
+      })
+    );
+  }
+
+  const hasExistingData = Boolean(
+    name || rows.some((r) => r.ingredient || r.amount) || instructions
+  );
+
   return (
-    <form onSubmit={submit} className="space-y-4">
+    <div className="space-y-4">
+      {!recipeId && (
+        <BulkImport
+          hasExistingData={hasExistingData}
+          onApply={applyParsed}
+        />
+      )}
+      <form onSubmit={submit} className="space-y-4">
       <div>
         <label className="text-sm">
           Name
@@ -287,7 +327,8 @@ export default function RecipeForm({
           </button>
         )}
       </div>
-    </form>
+      </form>
+    </div>
   );
 }
 
@@ -319,10 +360,21 @@ function RowEditor({
         <div className="flex-1">
           <IngredientPicker
             value={ing}
+            initialQuery={row.pendingName}
             onChange={(newIng) => {
-              onChange({ ingredient: newIng, unitLabel: "" });
+              onChange({
+                ingredient: newIng,
+                unitLabel: "",
+                pendingName: undefined,
+              });
             }}
           />
+          {row.pendingName && !ing && (
+            <div className="text-xs text-amber-600 mt-0.5">
+              ⚠ „{row.pendingName}" nicht gefunden — bitte aus Liste wählen
+              oder neu anlegen.
+            </div>
+          )}
         </div>
         <div className="w-20">
           <input
