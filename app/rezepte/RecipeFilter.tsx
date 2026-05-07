@@ -16,11 +16,7 @@ export default function RecipeFilter({
 
   const filtered = useMemo(() => {
     return recipes.filter((r) => {
-      if (
-        q &&
-        !r.name.toLowerCase().includes(q.toLowerCase())
-      )
-        return false;
+      if (q && !r.name.toLowerCase().includes(q.toLowerCase())) return false;
       if (activeTag && !(r.tags ?? []).includes(activeTag)) return false;
       return true;
     });
@@ -37,49 +33,39 @@ export default function RecipeFilter({
       />
       {allTags.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
-          <button
-            type="button"
+          <TagPill
+            active={activeTag === null}
             onClick={() => setActiveTag(null)}
-            className={`text-xs rounded-full px-2.5 py-1 border ${
-              activeTag === null
-                ? "bg-accent text-white border-accent"
-                : "bg-white"
-            }`}
           >
             Alle
-          </button>
+          </TagPill>
           {allTags.map((t) => (
-            <button
+            <TagPill
               key={t}
-              type="button"
+              active={activeTag === t}
               onClick={() => setActiveTag(t === activeTag ? null : t)}
-              className={`text-xs rounded-full px-2.5 py-1 border ${
-                activeTag === t
-                  ? "bg-accent text-white border-accent"
-                  : "bg-white"
-              }`}
             >
               {t}
-            </button>
+            </TagPill>
           ))}
         </div>
       )}
       {filtered.length === 0 ? (
-        <p className="text-neutral-500 text-sm py-8 text-center">
+        <p className="text-taupe-dark text-sm py-12 text-center">
           Keine Rezepte gefunden.
         </p>
       ) : (
-        <ul className="divide-y bg-white border rounded-lg">
+        <ul className="divide-y divide-taupe-light/60 bg-white border border-taupe-light rounded-lg shadow-sm overflow-hidden">
           {filtered.map((r) => (
             <li key={r.id}>
               <Link
                 href={`/rezepte/${r.id}`}
-                className="block p-3 hover:bg-neutral-50"
+                className="block px-4 py-3 hover:bg-cream-100 transition-colors"
               >
                 <div className="flex items-baseline gap-2">
-                  <div className="font-medium">{r.name}</div>
-                  <div className="text-xs text-neutral-500">
-                    {r.servings} Portionen
+                  <div className="font-serif text-base text-ink">{r.name}</div>
+                  <div className="text-xs text-taupe-dark">
+                    {r.servings} P.
                   </div>
                 </div>
                 {r.tags && r.tags.length > 0 && (
@@ -87,7 +73,7 @@ export default function RecipeFilter({
                     {r.tags.map((t) => (
                       <span
                         key={t}
-                        className="text-xs bg-neutral-100 rounded-full px-2 py-0.5"
+                        className="text-xs bg-cream-200 text-ink-soft rounded-full px-2 py-0.5"
                       >
                         {t}
                       </span>
@@ -100,5 +86,29 @@ export default function RecipeFilter({
         </ul>
       )}
     </div>
+  );
+}
+
+function TagPill({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`text-xs rounded-full px-3 py-1 border transition-colors ${
+        active
+          ? "bg-forest text-cream-100 border-forest"
+          : "bg-white border-taupe-light text-ink-soft hover:border-forest"
+      }`}
+    >
+      {children}
+    </button>
   );
 }

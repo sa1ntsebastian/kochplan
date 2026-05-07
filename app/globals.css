@@ -2,26 +2,70 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --color-forest: #175d3b;
+  --color-cream: #f5f5f7;
+  --color-peach: #f4b886;
+  --color-taupe: #beb0a7;
+  --color-ink: #1c1f1d;
+}
+
+/* Etoile (display, lowercase) — falls vorhanden in /public/fonts/etoile/ */
+@font-face {
+  font-family: "etoile";
+  src: url("/fonts/etoile/Etoile-Regular.woff2") format("woff2"),
+       url("/fonts/etoile/Etoile-Regular.woff") format("woff");
+  font-display: swap;
+}
+
 html,
 body {
   height: 100%;
 }
 
 body {
-  @apply bg-neutral-50 text-neutral-900 antialiased;
+  @apply bg-cream-100 text-ink antialiased;
+  font-feature-settings: "ss01", "kern";
 }
 
 input,
 select,
 textarea {
-  @apply bg-white;
+  @apply bg-white border-taupe-light text-ink;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  @apply outline-none ring-2 ring-peach/40 border-peach;
+}
+
+button {
+  font-family: inherit;
+}
+
+::selection {
+  background: var(--color-peach);
+  color: var(--color-forest);
+}
+
+/* Display-Klasse: lowercase + letter-spacing wie etoile-Look */
+.brand {
+  font-family: "etoile", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  text-transform: lowercase;
+  letter-spacing: 0.04em;
+}
+
+.font-serif-italic {
+  font-family: var(--font-serif, "EB Garamond"), Garamond, serif;
+  font-style: italic;
 }
 
 .markdown h1 {
-  @apply text-xl font-semibold mt-4 mb-2;
+  @apply text-xl font-serif mt-4 mb-2;
 }
 .markdown h2 {
-  @apply text-lg font-semibold mt-3 mb-2;
+  @apply text-lg font-serif mt-3 mb-2;
 }
 .markdown h3 {
   @apply text-base font-semibold mt-3 mb-1;
@@ -36,7 +80,7 @@ textarea {
   @apply list-decimal pl-6 mb-2;
 }
 .markdown code {
-  @apply bg-neutral-100 px-1 py-0.5 rounded text-sm;
+  @apply bg-cream-200 px-1 py-0.5 rounded text-sm;
 }
 
 @keyframes fadeIn {
@@ -47,5 +91,22 @@ textarea {
   to {
     opacity: 1;
     transform: translate(-50%, 0);
+  }
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .fade-up {
+    animation: fadeUp 480ms ease-out both;
   }
 }

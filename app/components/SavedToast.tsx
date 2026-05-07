@@ -31,7 +31,7 @@ export default function SavedToast() {
   if (!visible) return null;
   return (
     <div
-      className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg text-sm font-medium animate-[fadeIn_0.15s_ease-out]"
+      className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-forest text-white px-4 py-2 rounded-lg shadow-lg text-sm font-medium animate-[fadeIn_0.15s_ease-out]"
       role="status"
     >
       ✓ {visible}

@@ -89,16 +89,16 @@ export default async function WochenplanPage({
         <div className="flex items-center gap-2 text-sm">
           <Link
             href={`/wochenplan?week=${prev}`}
-            className="border rounded px-2 py-1 hover:bg-neutral-50"
+            className="border rounded px-2 py-1 hover:bg-cream-50"
           >
             ← Woche
           </Link>
-          <span className="text-neutral-500 px-2">
+          <span className="text-taupe-dark px-2">
             {formatDateShort(monday)} – {formatDateShort(sunday)}
           </span>
           <Link
             href={`/wochenplan?week=${next}`}
-            className="border rounded px-2 py-1 hover:bg-neutral-50"
+            className="border rounded px-2 py-1 hover:bg-cream-50"
           >
             Woche →
           </Link>
@@ -117,7 +117,7 @@ export default async function WochenplanPage({
       <div className="text-right">
         <Link
           href="/einkaufszettel"
-          className="inline-block bg-accent hover:bg-accent-dark text-white rounded px-4 py-2 text-sm font-medium"
+          className="inline-block bg-forest hover:bg-forest-dark text-white rounded px-4 py-2 text-sm font-medium"
         >
           Einkaufszettel öffnen →
         </Link>

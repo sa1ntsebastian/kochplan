@@ -42,7 +42,7 @@ export default function ShoppingListView({
             })
           }
           disabled={pending}
-          className="bg-accent hover:bg-accent-dark text-white rounded px-3 py-2 text-sm font-medium disabled:opacity-50"
+          className="bg-forest hover:bg-forest-dark text-white rounded px-3 py-2 text-sm font-medium disabled:opacity-50"
         >
           Aus Wochenplan generieren
         </button>
@@ -56,7 +56,7 @@ export default function ShoppingListView({
             });
           }}
           disabled={pending || totalItems === 0}
-          className="border rounded px-3 py-2 text-sm hover:bg-neutral-50 disabled:opacity-50"
+          className="border rounded px-3 py-2 text-sm hover:bg-cream-50 disabled:opacity-50"
         >
           Liste zurücksetzen
         </button>
@@ -65,7 +65,7 @@ export default function ShoppingListView({
       <ManualItemForm weekStart={weekStart} onAdded={() => router.refresh()} />
 
       {totalItems === 0 ? (
-        <p className="text-sm text-neutral-500 py-8 text-center">
+        <p className="text-sm text-taupe-dark py-8 text-center">
           Liste ist leer. Klick „Aus Wochenplan generieren" oder füge manuell
           etwas hinzu.
         </p>
@@ -111,7 +111,7 @@ function CategoryGroup({
 }) {
   return (
     <section className="bg-white border rounded-lg overflow-hidden">
-      <div className="px-3 py-2 bg-neutral-50 border-b text-xs font-medium uppercase tracking-wide text-neutral-500">
+      <div className="px-3 py-2 bg-cream-50 border-b text-xs font-medium uppercase tracking-wide text-taupe-dark">
         {group.label}
       </div>
       <ul className="divide-y">
@@ -136,13 +136,13 @@ function CategoryGroup({
                 {it.name}
               </div>
               {it.amount != null && (
-                <div className="text-xs text-neutral-500">
+                <div className="text-xs text-taupe-dark">
                   {formatAmount(it.amount)} {it.unit ? UNIT_LABELS[it.unit] : ""}
                 </div>
               )}
             </div>
             {it.source === "manual" && (
-              <span className="text-[10px] uppercase tracking-wide text-neutral-400">
+              <span className="text-[10px] uppercase tracking-wide text-taupe">
                 manuell
               </span>
             )}
@@ -150,7 +150,7 @@ function CategoryGroup({
               type="button"
               onClick={() => onDelete(it.id)}
               disabled={pending}
-              className="text-neutral-400 hover:text-red-600 px-2"
+              className="text-taupe hover:text-red-600 px-2"
               aria-label="Entfernen"
             >
               ×
@@ -248,7 +248,7 @@ function ManualItemForm({
       <button
         type="submit"
         disabled={pending || !name.trim()}
-        className="bg-accent hover:bg-accent-dark text-white rounded px-3 py-1.5 text-sm font-medium disabled:opacity-50"
+        className="bg-forest hover:bg-forest-dark text-white rounded px-3 py-1.5 text-sm font-medium disabled:opacity-50"
       >
         +
       </button>

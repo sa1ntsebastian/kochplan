@@ -265,7 +265,7 @@ export default function RecipeForm({
           <button
             type="button"
             onClick={addRow}
-            className="text-sm border rounded px-2 py-1 hover:bg-neutral-50"
+            className="text-sm border rounded px-2 py-1 hover:bg-cream-50"
           >
             + Zutat
           </button>
@@ -312,7 +312,7 @@ export default function RecipeForm({
         <button
           type="submit"
           disabled={pending}
-          className="bg-accent hover:bg-accent-dark text-white rounded px-4 py-2 text-sm font-medium disabled:opacity-50"
+          className="bg-forest hover:bg-forest-dark text-white rounded px-4 py-2 text-sm font-medium disabled:opacity-50"
         >
           {pending ? "Speichert…" : "Speichern"}
         </button>
@@ -418,14 +418,14 @@ function RowEditor({
         <button
           type="button"
           onClick={onRemove}
-          className="text-neutral-400 hover:text-red-600 px-2 py-2 text-lg leading-none"
+          className="text-taupe hover:text-red-600 px-2 py-2 text-lg leading-none"
           aria-label="Entfernen"
         >
           ×
         </button>
       </div>
       {ing && row.unitLabel && primaryAmount != null && (
-        <div className="text-xs text-neutral-500 pl-1">
+        <div className="text-xs text-taupe-dark pl-1">
           ≈ {formatNum(primaryAmount)} {UNIT_LABELS[ing.unit]}
         </div>
       )}

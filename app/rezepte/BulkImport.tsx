@@ -66,7 +66,7 @@ export default function BulkImport({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="w-full border-2 border-dashed border-neutral-300 hover:border-accent rounded-lg px-3 py-3 text-sm text-neutral-600 hover:text-accent"
+        className="w-full border-2 border-dashed border-taupe-light hover:border-forest rounded-lg px-3 py-3 text-sm text-ink-soft hover:text-peach-dark"
       >
         ✨ Rezept aus Text einlesen (mit KI)
       </button>
@@ -74,19 +74,19 @@ export default function BulkImport({
   }
 
   return (
-    <div className="border border-neutral-300 rounded-lg p-3 bg-white space-y-2">
+    <div className="border border-taupe-light rounded-lg p-3 bg-white space-y-2">
       <div className="flex items-center justify-between">
         <div className="text-sm font-medium">Rezept aus Text einlesen</div>
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className="text-neutral-400 hover:text-neutral-700 text-lg leading-none px-1"
+          className="text-taupe hover:text-ink-soft text-lg leading-none px-1"
           aria-label="Schließen"
         >
           ×
         </button>
       </div>
-      <p className="text-xs text-neutral-500">
+      <p className="text-xs text-taupe-dark">
         Kopier den vollständigen Rezept-Text rein (Titel, Portionen, Zutaten,
         Zubereitung). Claude analysiert ihn und füllt das Formular aus —
         Zutaten werden mit deinem Bestand gematcht.
@@ -118,11 +118,11 @@ Zubereitung:
           type="button"
           onClick={analyze}
           disabled={loading || !text.trim()}
-          className="bg-accent hover:bg-accent-dark text-white rounded px-3 py-1.5 text-sm font-medium disabled:opacity-50"
+          className="bg-forest hover:bg-forest-dark text-white rounded px-3 py-1.5 text-sm font-medium disabled:opacity-50"
         >
           {loading ? "Analysiert…" : "Analysieren"}
         </button>
-        <span className="text-xs text-neutral-400">
+        <span className="text-xs text-taupe">
           dauert ca. 3-5 Sekunden
         </span>
       </div>

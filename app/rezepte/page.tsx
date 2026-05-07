@@ -18,12 +18,12 @@ export default async function RezeptePage() {
   ).sort();
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Rezepte</h1>
+        <h1 className="font-serif text-3xl text-ink">Rezepte</h1>
         <Link
           href="/rezepte/neu"
-          className="bg-accent hover:bg-accent-dark text-white rounded px-3 py-2 text-sm font-medium"
+          className="bg-forest hover:bg-forest-dark text-cream-100 rounded px-3 py-2 text-sm font-medium transition-colors"
         >
           + Neues Rezept
         </Link>

@@ -57,16 +57,16 @@ export default async function EinkaufszettelPage({
         <div className="flex items-center gap-2 text-sm">
           <Link
             href={`/einkaufszettel?week=${prev}`}
-            className="border rounded px-2 py-1 hover:bg-neutral-50"
+            className="border rounded px-2 py-1 hover:bg-cream-50"
           >
             ←
           </Link>
-          <span className="text-neutral-500 px-2">
+          <span className="text-taupe-dark px-2">
             {formatDateShort(monday)} – {formatDateShort(sunday)}
           </span>
           <Link
             href={`/einkaufszettel?week=${next}`}
-            className="border rounded px-2 py-1 hover:bg-neutral-50"
+            className="border rounded px-2 py-1 hover:bg-cream-50"
           >
             →
           </Link>

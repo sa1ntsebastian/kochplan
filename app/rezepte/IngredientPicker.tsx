@@ -77,7 +77,7 @@ export default function IngredientPicker({
         className="w-full border rounded px-3 py-2 text-sm"
       />
       {value && (
-        <div className="text-xs text-neutral-500 mt-0.5">
+        <div className="text-xs text-taupe-dark mt-0.5">
           {CATEGORY_LABELS[value.category]} · Speicher: {UNIT_LABELS[value.unit]}
         </div>
       )}
@@ -97,7 +97,7 @@ export default function IngredientPicker({
           ) : (
             <>
               {loading && (
-                <div className="p-2 text-xs text-neutral-500">Suche…</div>
+                <div className="p-2 text-xs text-taupe-dark">Suche…</div>
               )}
               {results.map((r) => (
                 <button
@@ -107,10 +107,10 @@ export default function IngredientPicker({
                     onChange(r);
                     setOpen(false);
                   }}
-                  className="block w-full text-left px-3 py-2 text-sm hover:bg-neutral-50"
+                  className="block w-full text-left px-3 py-2 text-sm hover:bg-cream-50"
                 >
                   <div className="font-medium">{r.name}</div>
-                  <div className="text-xs text-neutral-500">
+                  <div className="text-xs text-taupe-dark">
                     {UNIT_LABELS[r.unit]} · {CATEGORY_LABELS[r.category]}
                     {r.units && r.units.length > 0 && (
                       <> · auch {r.units.map((u) => u.label).join(", ")}</>
@@ -122,13 +122,13 @@ export default function IngredientPicker({
                 <button
                   type="button"
                   onClick={() => setShowNewForm(true)}
-                  className="block w-full text-left px-3 py-2 text-sm bg-neutral-50 hover:bg-neutral-100 border-t"
+                  className="block w-full text-left px-3 py-2 text-sm bg-cream-50 hover:bg-cream-100 border-t"
                 >
                   + „{q}" als neue Zutat anlegen
                 </button>
               )}
               {!loading && results.length === 0 && !q.trim() && (
-                <div className="p-2 text-xs text-neutral-500">
+                <div className="p-2 text-xs text-taupe-dark">
                   Tippe um zu suchen…
                 </div>
               )}
@@ -306,7 +306,7 @@ function NewIngredientForm({
         <div className="border-t pt-2">
           <label className="text-xs block">
             Gewicht pro Stück (g){" "}
-            <span className="text-neutral-400">(optional)</span>
+            <span className="text-taupe">(optional)</span>
             <input
               type="number"
               step="0.1"
@@ -317,7 +317,7 @@ function NewIngredientForm({
               className="mt-0.5 w-full border rounded px-2 py-1.5"
             />
           </label>
-          <div className="text-xs text-neutral-400 mt-1">
+          <div className="text-xs text-taupe mt-1">
             Brücke zwischen Stück und Gramm — nötig, damit Nährwerte
             (pro 100 g) ausgewertet werden können.
           </div>
@@ -327,19 +327,19 @@ function NewIngredientForm({
       {unit !== "stk" && (
         <div className="border-t pt-2 space-y-1">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-neutral-600">
+            <span className="text-xs text-ink-soft">
               Alternative Einheiten (optional)
             </span>
             <button
               type="button"
               onClick={addAlias}
-              className="text-xs px-2 py-0.5 border rounded hover:bg-neutral-50"
+              className="text-xs px-2 py-0.5 border rounded hover:bg-cream-50"
             >
               + Einheit
             </button>
           </div>
           {aliases.length === 0 ? (
-            <div className="text-xs text-neutral-400">
+            <div className="text-xs text-taupe">
               z.B. TL = 5, EL = 15, Stück = 80 …
             </div>
           ) : (
@@ -354,7 +354,7 @@ function NewIngredientForm({
                     placeholder="Label (z.B. TL)"
                     className="flex-1 border rounded px-2 py-1 text-xs"
                   />
-                  <span className="text-xs text-neutral-500">=</span>
+                  <span className="text-xs text-taupe-dark">=</span>
                   <input
                     type="number"
                     step="0.1"
@@ -365,13 +365,13 @@ function NewIngredientForm({
                     placeholder="0"
                     className="w-20 border rounded px-2 py-1 text-xs"
                   />
-                  <span className="text-xs text-neutral-500 w-6">
+                  <span className="text-xs text-taupe-dark w-6">
                     {primaryLabel}
                   </span>
                   <button
                     type="button"
                     onClick={() => removeAlias(i)}
-                    className="text-neutral-400 hover:text-red-600 text-base leading-none px-1"
+                    className="text-taupe hover:text-red-600 text-base leading-none px-1"
                   >
                     ×
                   </button>
@@ -384,23 +384,23 @@ function NewIngredientForm({
 
       <div className="border-t pt-2 space-y-1.5">
         <div className="flex items-center justify-between">
-          <span className="text-xs text-neutral-600">
+          <span className="text-xs text-ink-soft">
             Nährwerte pro 100 {unit === "stk" ? "g" : unit}{" "}
-            <span className="text-neutral-400">(optional)</span>
+            <span className="text-taupe">(optional)</span>
           </span>
           <button
             type="button"
             onClick={lookupOFF}
             disabled={lookingUp || !name.trim()}
-            className="text-xs px-2 py-1 border rounded hover:bg-neutral-50 disabled:opacity-50"
+            className="text-xs px-2 py-1 border rounded hover:bg-cream-50 disabled:opacity-50"
           >
             {lookingUp ? "Suche…" : "Aus Open Food Facts laden"}
           </button>
         </div>
 
         {lookupResults && lookupResults.length > 0 && (
-          <div className="border rounded bg-neutral-50 max-h-56 overflow-auto">
-            <div className="px-2 py-1 text-xs text-neutral-500 border-b bg-white sticky top-0">
+          <div className="border rounded bg-cream-50 max-h-56 overflow-auto">
+            <div className="px-2 py-1 text-xs text-taupe-dark border-b bg-white sticky top-0">
               Treffer auswählen — Werte werden in die Felder unten kopiert:
             </div>
             <ul className="divide-y">
@@ -412,7 +412,7 @@ function NewIngredientForm({
                     className="w-full text-left px-2 py-1.5 hover:bg-white text-xs"
                   >
                     <div className="font-medium">{r.name}</div>
-                    <div className="text-neutral-500">
+                    <div className="text-taupe-dark">
                       {r.brand && <span>{r.brand} · </span>}
                       {r.quantity && <span>{r.quantity} · </span>}
                       {r.kcal_per_100} kcal
@@ -429,7 +429,7 @@ function NewIngredientForm({
         )}
 
         {lookupNote && (
-          <div className="text-xs text-neutral-500">{lookupNote}</div>
+          <div className="text-xs text-taupe-dark">{lookupNote}</div>
         )}
 
         <div className="grid grid-cols-2 gap-1.5">
@@ -454,7 +454,7 @@ function NewIngredientForm({
           type="button"
           onClick={save}
           disabled={saving || !name.trim()}
-          className="bg-accent text-white rounded px-3 py-1.5 text-xs disabled:opacity-50"
+          className="bg-forest text-white rounded px-3 py-1.5 text-xs disabled:opacity-50"
         >
           {saving ? "Legt an…" : "Anlegen"}
         </button>
