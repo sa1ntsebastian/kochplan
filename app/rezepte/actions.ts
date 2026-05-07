@@ -6,7 +6,9 @@ import { supabaseServer } from "@/lib/supabase";
 
 export type RecipeIngredientInput = {
   ingredient_id: string;
-  amount: number;
+  amount: number; // in primary unit (z.B. g)
+  display_amount: number | null;
+  display_unit: string | null;
 };
 
 export async function createRecipe(input: {
@@ -36,6 +38,8 @@ export async function createRecipe(input: {
       recipe_id: recipe.id,
       ingredient_id: ri.ingredient_id,
       amount: ri.amount,
+      display_amount: ri.display_amount,
+      display_unit: ri.display_unit,
     }));
     const { error: e2 } = await sb.from("recipe_ingredients").insert(rows);
     if (e2) throw new Error(e2.message);
@@ -75,6 +79,8 @@ export async function updateRecipe(
       recipe_id: id,
       ingredient_id: ri.ingredient_id,
       amount: ri.amount,
+      display_amount: ri.display_amount,
+      display_unit: ri.display_unit,
     }));
     const { error: e2 } = await sb.from("recipe_ingredients").insert(rows);
     if (e2) throw new Error(e2.message);

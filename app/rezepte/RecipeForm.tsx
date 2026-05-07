@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import IngredientPicker from "./IngredientPicker";
 import type { Ingredient } from "@/lib/types";
@@ -11,7 +11,10 @@ type Row = {
   key: string;
   ingredient: Ingredient | null;
   amount: string;
+  unitLabel: string; // "" = primäre Einheit
 };
+
+const NEW_UNIT_TOKEN = "__NEW_UNIT__";
 
 export default function RecipeForm({
   recipeId,
@@ -24,7 +27,12 @@ export default function RecipeForm({
     instructions: string;
     notes: string;
     tags: string[];
-    rows: { ingredient: Ingredient; amount: number }[];
+    rows: {
+      ingredient: Ingredient;
+      amount: number;
+      display_amount: number | null;
+      display_unit: string | null;
+    }[];
   };
 }) {
   const router = useRouter();
@@ -39,9 +47,11 @@ export default function RecipeForm({
     initial?.rows.map((r, i) => ({
       key: `init-${i}`,
       ingredient: r.ingredient,
-      amount: String(r.amount),
+      amount:
+        r.display_amount != null ? String(r.display_amount) : String(r.amount),
+      unitLabel: r.display_unit ?? "",
     })) ?? [
-      { key: "new-0", ingredient: null, amount: "" },
+      { key: "new-0", ingredient: null, amount: "", unitLabel: "" },
     ]
   );
   const [error, setError] = useState<string | null>(null);
@@ -50,7 +60,12 @@ export default function RecipeForm({
   function addRow() {
     setRows((r) => [
       ...r,
-      { key: `new-${Date.now()}`, ingredient: null, amount: "" },
+      {
+        key: `new-${Date.now()}-${Math.random()}`,
+        ingredient: null,
+        amount: "",
+        unitLabel: "",
+      },
     ]);
   }
   function removeRow(key: string) {
@@ -62,16 +77,67 @@ export default function RecipeForm({
     );
   }
 
+  async function quickAddUnit(rowKey: string, ingredient: Ingredient) {
+    const label = window.prompt("Neue Einheit (z.B. TL, EL, Stück):");
+    if (!label) return;
+    const factorStr = window.prompt(
+      `Wie viele ${UNIT_LABELS[ingredient.unit]} sind 1 ${label}?`
+    );
+    if (!factorStr) return;
+    const factor = Number(factorStr.replace(",", "."));
+    if (!Number.isFinite(factor) || factor <= 0) {
+      alert("Faktor ungültig.");
+      return;
+    }
+    const res = await fetch(`/api/ingredients/${ingredient.id}/units`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ label: label.trim(), factor }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      alert(data.error ?? "Fehler beim Anlegen");
+      return;
+    }
+    const data = await res.json();
+    const newUnit = data.unit;
+    const updated: Ingredient = {
+      ...ingredient,
+      units: [...(ingredient.units ?? []), newUnit].sort(
+        (a, b) => a.sort_order - b.sort_order
+      ),
+    };
+    updateRow(rowKey, { ingredient: updated, unitLabel: newUnit.label });
+  }
+
   function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     const ingredients = rows
-      .filter((r) => r.ingredient && r.amount.trim())
-      .map((r) => ({
-        ingredient_id: r.ingredient!.id,
-        amount: Number(r.amount),
-      }))
-      .filter((r) => Number.isFinite(r.amount) && r.amount > 0);
+      .map((r) => {
+        if (!r.ingredient || !r.amount.trim()) return null;
+        const displayAmount = Number(r.amount.replace(",", "."));
+        if (!Number.isFinite(displayAmount) || displayAmount <= 0) return null;
+        const factor = factorFor(r.ingredient, r.unitLabel);
+        const amount = displayAmount * factor;
+        const isPrimary = !r.unitLabel;
+        return {
+          ingredient_id: r.ingredient.id,
+          amount,
+          display_amount: isPrimary ? null : displayAmount,
+          display_unit: isPrimary ? null : r.unitLabel,
+        };
+      })
+      .filter(
+        (
+          x
+        ): x is {
+          ingredient_id: string;
+          amount: number;
+          display_amount: number | null;
+          display_unit: string | null;
+        } => x !== null
+      );
 
     const tags = tagsInput
       .split(",")
@@ -166,40 +232,13 @@ export default function RecipeForm({
         </div>
         <div className="space-y-2">
           {rows.map((row) => (
-            <div key={row.key} className="flex gap-2 items-start">
-              <div className="flex-1">
-                <IngredientPicker
-                  value={row.ingredient}
-                  onChange={(ing) => updateRow(row.key, { ingredient: ing })}
-                />
-              </div>
-              <div className="w-28">
-                <div className="flex">
-                  <input
-                    type="number"
-                    step="0.1"
-                    min={0}
-                    value={row.amount}
-                    onChange={(e) =>
-                      updateRow(row.key, { amount: e.target.value })
-                    }
-                    placeholder="Menge"
-                    className="w-full border rounded-l px-2 py-2 text-sm"
-                  />
-                  <span className="inline-flex items-center px-2 border border-l-0 rounded-r bg-neutral-50 text-xs text-neutral-600">
-                    {row.ingredient ? UNIT_LABELS[row.ingredient.unit] : "—"}
-                  </span>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => removeRow(row.key)}
-                className="text-neutral-400 hover:text-red-600 px-2 py-2 text-lg leading-none"
-                aria-label="Entfernen"
-              >
-                ×
-              </button>
-            </div>
+            <RowEditor
+              key={row.key}
+              row={row}
+              onChange={(patch) => updateRow(row.key, patch)}
+              onRemove={() => removeRow(row.key)}
+              onAddUnit={(ing) => quickAddUnit(row.key, ing)}
+            />
           ))}
         </div>
       </div>
@@ -250,4 +289,105 @@ export default function RecipeForm({
       </div>
     </form>
   );
+}
+
+function RowEditor({
+  row,
+  onChange,
+  onRemove,
+  onAddUnit,
+}: {
+  row: Row;
+  onChange: (patch: Partial<Row>) => void;
+  onRemove: () => void;
+  onAddUnit: (ing: Ingredient) => void;
+}) {
+  const ing = row.ingredient;
+  const factor = useMemo(
+    () => (ing ? factorFor(ing, row.unitLabel) : 1),
+    [ing, row.unitLabel]
+  );
+  const displayAmount = Number((row.amount || "0").replace(",", "."));
+  const primaryAmount =
+    Number.isFinite(displayAmount) && row.unitLabel
+      ? Math.round(displayAmount * factor * 10) / 10
+      : null;
+
+  return (
+    <div className="space-y-1">
+      <div className="flex gap-2 items-start">
+        <div className="flex-1">
+          <IngredientPicker
+            value={ing}
+            onChange={(newIng) => {
+              onChange({ ingredient: newIng, unitLabel: "" });
+            }}
+          />
+        </div>
+        <div className="w-20">
+          <input
+            type="text"
+            inputMode="decimal"
+            value={row.amount}
+            onChange={(e) => onChange({ amount: e.target.value })}
+            placeholder="Menge"
+            className="w-full border rounded px-2 py-2 text-sm"
+          />
+        </div>
+        <div className="w-28">
+          <select
+            value={row.unitLabel}
+            onChange={(e) => {
+              const v = e.target.value;
+              if (v === NEW_UNIT_TOKEN && ing) {
+                onAddUnit(ing);
+                return;
+              }
+              onChange({ unitLabel: v });
+            }}
+            disabled={!ing}
+            className="w-full border rounded px-2 py-2 text-sm bg-white"
+          >
+            {ing ? (
+              <>
+                <option value="">{UNIT_LABELS[ing.unit]}</option>
+                {(ing.units ?? []).map((u) => (
+                  <option key={u.id} value={u.label}>
+                    {u.label}
+                  </option>
+                ))}
+                <option value={NEW_UNIT_TOKEN}>+ neue Einheit…</option>
+              </>
+            ) : (
+              <option value="">—</option>
+            )}
+          </select>
+        </div>
+        <button
+          type="button"
+          onClick={onRemove}
+          className="text-neutral-400 hover:text-red-600 px-2 py-2 text-lg leading-none"
+          aria-label="Entfernen"
+        >
+          ×
+        </button>
+      </div>
+      {ing && row.unitLabel && primaryAmount != null && (
+        <div className="text-xs text-neutral-500 pl-1">
+          ≈ {formatNum(primaryAmount)} {UNIT_LABELS[ing.unit]}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function factorFor(ing: Ingredient, unitLabel: string): number {
+  if (!unitLabel) return 1;
+  const u = (ing.units ?? []).find((x) => x.label === unitLabel);
+  return u ? Number(u.factor) : 1;
+}
+
+function formatNum(n: number): string {
+  if (Number.isInteger(n)) return String(n);
+  return n.toFixed(1).replace(".", ",");
 }

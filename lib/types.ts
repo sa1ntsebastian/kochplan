@@ -13,6 +13,14 @@ export type Category =
 
 export type Slot = "lunch" | "dinner";
 
+export interface IngredientUnit {
+  id: string;
+  ingredient_id: string;
+  label: string;
+  factor: number;
+  sort_order: number;
+}
+
 export interface Ingredient {
   id: string;
   name: string;
@@ -23,6 +31,7 @@ export interface Ingredient {
   carbs_per_100: number | null;
   fat_per_100: number | null;
   created_at: string;
+  units?: IngredientUnit[];
 }
 
 export interface Recipe {
@@ -41,6 +50,8 @@ export interface RecipeIngredient {
   recipe_id: string;
   ingredient_id: string;
   amount: number;
+  display_amount: number | null;
+  display_unit: string | null;
   ingredient?: Ingredient;
 }
 

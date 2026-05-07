@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import type { Category, Ingredient, Unit } from "@/lib/types";
 import { CATEGORY_LABELS, UNIT_LABELS } from "@/lib/categories";
 
+type AliasDraft = { label: string; factor: string };
+
 type Props = {
   value: Ingredient | null;
   onChange: (i: Ingredient) => void;
@@ -19,7 +21,7 @@ export default function IngredientPicker({ value, onChange }: Props) {
 
   useEffect(() => {
     setQ(value?.name ?? "");
-  }, [value?.id]);
+  }, [value?.id, value?.name]);
 
   useEffect(() => {
     if (!open) return;
@@ -66,12 +68,12 @@ export default function IngredientPicker({ value, onChange }: Props) {
       />
       {value && (
         <div className="text-xs text-neutral-500 mt-0.5">
-          Einheit: {UNIT_LABELS[value.unit]} · {CATEGORY_LABELS[value.category]}
+          {CATEGORY_LABELS[value.category]} · Speicher: {UNIT_LABELS[value.unit]}
         </div>
       )}
 
       {open && (
-        <div className="absolute z-20 mt-1 w-full bg-white border rounded-lg shadow-lg max-h-72 overflow-auto">
+        <div className="absolute z-20 mt-1 w-full bg-white border rounded-lg shadow-lg max-h-80 overflow-auto">
           {showNewForm ? (
             <NewIngredientForm
               initialName={q}
@@ -100,6 +102,9 @@ export default function IngredientPicker({ value, onChange }: Props) {
                   <div className="font-medium">{r.name}</div>
                   <div className="text-xs text-neutral-500">
                     {UNIT_LABELS[r.unit]} · {CATEGORY_LABELS[r.category]}
+                    {r.units && r.units.length > 0 && (
+                      <> · auch {r.units.map((u) => u.label).join(", ")}</>
+                    )}
                   </div>
                 </button>
               ))}
@@ -141,6 +146,7 @@ function NewIngredientForm({
   const [protein, setProtein] = useState("");
   const [carbs, setCarbs] = useState("");
   const [fat, setFat] = useState("");
+  const [aliases, setAliases] = useState<AliasDraft[]>([]);
   const [saving, setSaving] = useState(false);
   const [lookingUp, setLookingUp] = useState(false);
   const [lookupNote, setLookupNote] = useState<string | null>(null);
@@ -176,6 +182,9 @@ function NewIngredientForm({
     setSaving(true);
     setError(null);
     try {
+      const cleanAliases = aliases
+        .map((a) => ({ label: a.label.trim(), factor: Number(a.factor) }))
+        .filter((a) => a.label && Number.isFinite(a.factor) && a.factor > 0);
       const res = await fetch("/api/ingredients", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -187,6 +196,7 @@ function NewIngredientForm({
           protein_per_100: protein,
           carbs_per_100: carbs,
           fat_per_100: fat,
+          units: cleanAliases,
         }),
       });
       const data = await res.json();
@@ -198,6 +208,18 @@ function NewIngredientForm({
       setSaving(false);
     }
   }
+
+  function addAlias() {
+    setAliases((a) => [...a, { label: "", factor: "" }]);
+  }
+  function updateAlias(i: number, patch: Partial<AliasDraft>) {
+    setAliases((a) => a.map((x, j) => (j === i ? { ...x, ...patch } : x)));
+  }
+  function removeAlias(i: number) {
+    setAliases((a) => a.filter((_, j) => j !== i));
+  }
+
+  const primaryLabel = unit === "stk" ? "Stk" : unit;
 
   return (
     <form onSubmit={save} className="p-3 space-y-2 text-sm">
@@ -211,7 +233,7 @@ function NewIngredientForm({
       />
       <div className="grid grid-cols-2 gap-2">
         <label className="text-xs">
-          Einheit
+          Speicher-Einheit
           <select
             value={unit}
             onChange={(e) => setUnit(e.target.value as Unit)}
@@ -238,27 +260,87 @@ function NewIngredientForm({
         </label>
       </div>
 
-      <div className="flex items-center justify-between">
-        <span className="text-xs text-neutral-500">
-          Nährwerte pro 100 {unit === "stk" ? "g" : unit} (optional)
-        </span>
-        <button
-          type="button"
-          onClick={lookupOFF}
-          disabled={lookingUp || !name.trim()}
-          className="text-xs px-2 py-1 border rounded hover:bg-neutral-50 disabled:opacity-50"
-        >
-          {lookingUp ? "Lädt…" : "OFF-Lookup"}
-        </button>
-      </div>
-      {lookupNote && (
-        <div className="text-xs text-neutral-500">{lookupNote}</div>
+      {unit !== "stk" && (
+        <div className="border-t pt-2 space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-neutral-600">
+              Alternative Einheiten (optional)
+            </span>
+            <button
+              type="button"
+              onClick={addAlias}
+              className="text-xs px-2 py-0.5 border rounded hover:bg-neutral-50"
+            >
+              + Einheit
+            </button>
+          </div>
+          {aliases.length === 0 ? (
+            <div className="text-xs text-neutral-400">
+              z.B. TL = 5, EL = 15, Stück = 80 …
+            </div>
+          ) : (
+            <div className="space-y-1">
+              {aliases.map((a, i) => (
+                <div key={i} className="flex gap-1 items-center">
+                  <input
+                    value={a.label}
+                    onChange={(e) =>
+                      updateAlias(i, { label: e.target.value })
+                    }
+                    placeholder="Label (z.B. TL)"
+                    className="flex-1 border rounded px-2 py-1 text-xs"
+                  />
+                  <span className="text-xs text-neutral-500">=</span>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={a.factor}
+                    onChange={(e) =>
+                      updateAlias(i, { factor: e.target.value })
+                    }
+                    placeholder="0"
+                    className="w-20 border rounded px-2 py-1 text-xs"
+                  />
+                  <span className="text-xs text-neutral-500 w-6">
+                    {primaryLabel}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => removeAlias(i)}
+                    className="text-neutral-400 hover:text-red-600 text-base leading-none px-1"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       )}
-      <div className="grid grid-cols-4 gap-1.5">
-        <NumInput label="kcal" value={kcal} onChange={setKcal} />
-        <NumInput label="P (g)" value={protein} onChange={setProtein} />
-        <NumInput label="K (g)" value={carbs} onChange={setCarbs} />
-        <NumInput label="F (g)" value={fat} onChange={setFat} />
+
+      <div className="border-t pt-2">
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-xs text-neutral-600">
+            Nährwerte pro 100 {unit === "stk" ? "g" : unit} (optional)
+          </span>
+          <button
+            type="button"
+            onClick={lookupOFF}
+            disabled={lookingUp || !name.trim()}
+            className="text-xs px-2 py-1 border rounded hover:bg-neutral-50 disabled:opacity-50"
+          >
+            {lookingUp ? "Lädt…" : "OFF-Lookup"}
+          </button>
+        </div>
+        {lookupNote && (
+          <div className="text-xs text-neutral-500 mb-1">{lookupNote}</div>
+        )}
+        <div className="grid grid-cols-4 gap-1.5">
+          <NumInput label="kcal" value={kcal} onChange={setKcal} />
+          <NumInput label="P (g)" value={protein} onChange={setProtein} />
+          <NumInput label="K (g)" value={carbs} onChange={setCarbs} />
+          <NumInput label="F (g)" value={fat} onChange={setFat} />
+        </div>
       </div>
 
       {error && <div className="text-xs text-red-600">{error}</div>}

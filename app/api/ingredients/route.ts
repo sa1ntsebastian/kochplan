@@ -8,13 +8,19 @@ export async function GET(req: NextRequest) {
   const sb = supabaseServer();
   let query = sb
     .from("ingredients")
-    .select("*")
+    .select("*, units:ingredient_units(id, ingredient_id, label, factor, sort_order)")
     .order("name", { ascending: true })
     .limit(20);
   if (q) query = query.ilike("name", `%${q}%`);
   const { data, error } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ ingredients: data ?? [] });
+  const ingredients = (data ?? []).map((row) => ({
+    ...row,
+    units: ((row as { units?: { sort_order: number }[] }).units ?? [])
+      .slice()
+      .sort((a, b) => a.sort_order - b.sort_order),
+  }));
+  return NextResponse.json({ ingredients });
 }
 
 export async function POST(req: NextRequest) {
@@ -26,6 +32,15 @@ export async function POST(req: NextRequest) {
   const protein_per_100 = numOrNull(body.protein_per_100);
   const carbs_per_100 = numOrNull(body.carbs_per_100);
   const fat_per_100 = numOrNull(body.fat_per_100);
+  const aliases = Array.isArray(body.units)
+    ? (body.units as { label: string; factor: number | string }[])
+        .map((u, i) => ({
+          label: String(u.label ?? "").trim(),
+          factor: Number(u.factor),
+          sort_order: i + 1,
+        }))
+        .filter((u) => u.label && Number.isFinite(u.factor) && u.factor > 0)
+    : [];
 
   if (!name) {
     return NextResponse.json({ error: "Name erforderlich" }, { status: 400 });
@@ -35,7 +50,7 @@ export async function POST(req: NextRequest) {
   }
 
   const sb = supabaseServer();
-  const { data, error } = await sb
+  const { data: ing, error } = await sb
     .from("ingredients")
     .insert({
       name,
@@ -48,8 +63,33 @@ export async function POST(req: NextRequest) {
     })
     .select("*")
     .single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ ingredient: data });
+  if (error || !ing) {
+    return NextResponse.json(
+      { error: error?.message ?? "insert failed" },
+      { status: 500 }
+    );
+  }
+
+  let unitsRows: { id: string; ingredient_id: string; label: string; factor: number; sort_order: number }[] = [];
+  if (aliases.length > 0) {
+    const { data: u, error: e2 } = await sb
+      .from("ingredient_units")
+      .insert(
+        aliases.map((a) => ({
+          ingredient_id: ing.id,
+          label: a.label,
+          factor: a.factor,
+          sort_order: a.sort_order,
+        }))
+      )
+      .select("*");
+    if (e2) {
+      return NextResponse.json({ error: e2.message }, { status: 500 });
+    }
+    unitsRows = u ?? [];
+  }
+
+  return NextResponse.json({ ingredient: { ...ing, units: unitsRows } });
 }
 
 function numOrNull(v: unknown): number | null {

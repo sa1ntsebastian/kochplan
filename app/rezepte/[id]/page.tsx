@@ -1,7 +1,12 @@
 import { notFound } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase";
 import RecipeForm from "../RecipeForm";
-import type { Ingredient, Recipe, RecipeIngredient } from "@/lib/types";
+import type {
+  Ingredient,
+  IngredientUnit,
+  Recipe,
+  RecipeIngredient,
+} from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -23,12 +28,14 @@ export default async function RezeptDetailPage({
 
   const { data: ingredients } = await sb
     .from("recipe_ingredients")
-    .select("*, ingredient:ingredients(*)")
+    .select(
+      "*, ingredient:ingredients(*, units:ingredient_units(id, ingredient_id, label, factor, sort_order))"
+    )
     .eq("recipe_id", id);
 
   const r = recipe as Recipe;
   const ris = (ingredients ?? []) as (RecipeIngredient & {
-    ingredient: Ingredient;
+    ingredient: Ingredient & { units: IngredientUnit[] };
   })[];
 
   return (
@@ -43,8 +50,16 @@ export default async function RezeptDetailPage({
           notes: r.notes ?? "",
           tags: r.tags ?? [],
           rows: ris.map((ri) => ({
-            ingredient: ri.ingredient,
+            ingredient: {
+              ...ri.ingredient,
+              units: (ri.ingredient.units ?? [])
+                .slice()
+                .sort((a, b) => a.sort_order - b.sort_order),
+            },
             amount: Number(ri.amount),
+            display_amount:
+              ri.display_amount != null ? Number(ri.display_amount) : null,
+            display_unit: ri.display_unit,
           })),
         }}
       />
