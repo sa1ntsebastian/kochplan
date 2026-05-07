@@ -130,6 +130,17 @@ export default function IngredientPicker({ value, onChange }: Props) {
   );
 }
 
+type OFFResult = {
+  name: string;
+  brand: string | null;
+  quantity: string | null;
+  kcal_per_100: number | null;
+  protein_per_100: number | null;
+  carbs_per_100: number | null;
+  fat_per_100: number | null;
+  image: string | null;
+};
+
 function NewIngredientForm({
   initialName,
   onCreated,
@@ -150,31 +161,38 @@ function NewIngredientForm({
   const [saving, setSaving] = useState(false);
   const [lookingUp, setLookingUp] = useState(false);
   const [lookupNote, setLookupNote] = useState<string | null>(null);
+  const [lookupResults, setLookupResults] = useState<OFFResult[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function lookupOFF() {
     setLookingUp(true);
     setLookupNote(null);
+    setLookupResults(null);
     try {
       const res = await fetch(
         `/api/ingredients/off-lookup?q=${encodeURIComponent(name)}`
       );
       const data = await res.json();
-      if (data.matches > 0) {
-        if (data.kcal_per_100 != null) setKcal(String(data.kcal_per_100));
-        if (data.protein_per_100 != null)
-          setProtein(String(data.protein_per_100));
-        if (data.carbs_per_100 != null) setCarbs(String(data.carbs_per_100));
-        if (data.fat_per_100 != null) setFat(String(data.fat_per_100));
-        setLookupNote(`Median aus ${data.matches} OFF-Treffern.`);
+      const results: OFFResult[] = data.results ?? [];
+      if (results.length === 0) {
+        setLookupNote("Keine Treffer mit Nährwertdaten gefunden.");
       } else {
-        setLookupNote("Keine OFF-Treffer.");
+        setLookupResults(results);
       }
     } catch {
       setLookupNote("Fehler beim Abruf.");
     } finally {
       setLookingUp(false);
     }
+  }
+
+  function applyResult(r: OFFResult) {
+    if (r.kcal_per_100 != null) setKcal(String(r.kcal_per_100));
+    if (r.protein_per_100 != null) setProtein(String(r.protein_per_100));
+    if (r.carbs_per_100 != null) setCarbs(String(r.carbs_per_100));
+    if (r.fat_per_100 != null) setFat(String(r.fat_per_100));
+    setLookupResults(null);
+    setLookupNote(`Werte übernommen aus „${r.name}".`);
   }
 
   async function save(e: React.FormEvent) {
@@ -318,10 +336,11 @@ function NewIngredientForm({
         </div>
       )}
 
-      <div className="border-t pt-2">
-        <div className="flex items-center justify-between mb-1">
+      <div className="border-t pt-2 space-y-1.5">
+        <div className="flex items-center justify-between">
           <span className="text-xs text-neutral-600">
-            Nährwerte pro 100 {unit === "stk" ? "g" : unit} (optional)
+            Nährwerte pro 100 {unit === "stk" ? "g" : unit}{" "}
+            <span className="text-neutral-400">(optional)</span>
           </span>
           <button
             type="button"
@@ -329,17 +348,57 @@ function NewIngredientForm({
             disabled={lookingUp || !name.trim()}
             className="text-xs px-2 py-1 border rounded hover:bg-neutral-50 disabled:opacity-50"
           >
-            {lookingUp ? "Lädt…" : "OFF-Lookup"}
+            {lookingUp ? "Suche…" : "Aus Open Food Facts laden"}
           </button>
         </div>
-        {lookupNote && (
-          <div className="text-xs text-neutral-500 mb-1">{lookupNote}</div>
+
+        {lookupResults && lookupResults.length > 0 && (
+          <div className="border rounded bg-neutral-50 max-h-56 overflow-auto">
+            <div className="px-2 py-1 text-xs text-neutral-500 border-b bg-white sticky top-0">
+              Treffer auswählen — Werte werden in die Felder unten kopiert:
+            </div>
+            <ul className="divide-y">
+              {lookupResults.map((r, i) => (
+                <li key={i}>
+                  <button
+                    type="button"
+                    onClick={() => applyResult(r)}
+                    className="w-full text-left px-2 py-1.5 hover:bg-white text-xs"
+                  >
+                    <div className="font-medium">{r.name}</div>
+                    <div className="text-neutral-500">
+                      {r.brand && <span>{r.brand} · </span>}
+                      {r.quantity && <span>{r.quantity} · </span>}
+                      {r.kcal_per_100} kcal
+                      {r.protein_per_100 != null &&
+                        ` · ${r.protein_per_100} g E`}
+                      {r.carbs_per_100 != null && ` · ${r.carbs_per_100} g K`}
+                      {r.fat_per_100 != null && ` · ${r.fat_per_100} g F`}
+                    </div>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
-        <div className="grid grid-cols-4 gap-1.5">
-          <NumInput label="kcal" value={kcal} onChange={setKcal} />
-          <NumInput label="P (g)" value={protein} onChange={setProtein} />
-          <NumInput label="K (g)" value={carbs} onChange={setCarbs} />
-          <NumInput label="F (g)" value={fat} onChange={setFat} />
+
+        {lookupNote && (
+          <div className="text-xs text-neutral-500">{lookupNote}</div>
+        )}
+
+        <div className="grid grid-cols-2 gap-1.5">
+          <NumInput
+            label="Kalorien (kcal)"
+            value={kcal}
+            onChange={setKcal}
+          />
+          <NumInput label="Eiweiß (g)" value={protein} onChange={setProtein} />
+          <NumInput
+            label="Kohlenhydrate (g)"
+            value={carbs}
+            onChange={setCarbs}
+          />
+          <NumInput label="Fett (g)" value={fat} onChange={setFat} />
         </div>
       </div>
 
