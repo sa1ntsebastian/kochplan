@@ -10,11 +10,19 @@
   --color-ink: #1c1f1d;
 }
 
-/* Etoile (display, lowercase) — falls vorhanden in /public/fonts/etoile/ */
+/* Etoile (display, lowercase) */
 @font-face {
   font-family: "etoile";
-  src: url("/fonts/etoile/Etoile-Regular.woff2") format("woff2"),
-       url("/fonts/etoile/Etoile-Regular.woff") format("woff");
+  src: url("/fonts/etoile/Etoile-Regular.woff") format("woff");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "etoile";
+  src: url("/fonts/etoile/Etoile-Italic.woff") format("woff");
+  font-weight: 400;
+  font-style: italic;
   font-display: swap;
 }
 
