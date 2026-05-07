@@ -9,8 +9,9 @@ import {
   WEEKDAY_LABELS,
   weekDates,
 } from "@/lib/dates";
-import type { MealPlanEntry, Recipe, Slot } from "@/lib/types";
-import SlotEditor from "./SlotEditor";
+import type { MealPlanEntry } from "@/lib/types";
+import WeekGrid from "./WeekGrid";
+import type { RecipeMeta } from "./lib";
 
 export const dynamic = "force-dynamic";
 
@@ -35,19 +36,51 @@ export default async function WochenplanPage({
       .select("*")
       .gte("date", toISODate(monday))
       .lte("date", toISODate(sunday)),
-    sb.from("recipes").select("id,name,servings").order("name"),
+    sb
+      .from("recipes")
+      .select(
+        "id, name, servings, tags, recipe_ingredients(ingredient:ingredients(name))"
+      )
+      .order("name"),
   ]);
 
   const plans = (plansRes.data ?? []) as MealPlanEntry[];
-  const recipes = (recipesRes.data ?? []) as Pick<
-    Recipe,
-    "id" | "name" | "servings"
-  >[];
 
-  const lookup = new Map<string, MealPlanEntry>();
-  for (const p of plans) lookup.set(`${p.date}__${p.slot}`, p);
+  type RawRecipe = {
+    id: string;
+    name: string;
+    servings: number;
+    tags: string[] | null;
+    recipe_ingredients:
+      | { ingredient: { name: string } | { name: string }[] | null }[]
+      | null;
+  };
+  const rawRecipes = (recipesRes.data ?? []) as unknown as RawRecipe[];
 
-  const days = weekDates(monday);
+  const recipes: RecipeMeta[] = rawRecipes.map((r) => {
+    const names: string[] = [];
+    for (const ri of r.recipe_ingredients ?? []) {
+      const rel = ri.ingredient;
+      if (!rel) continue;
+      if (Array.isArray(rel)) {
+        for (const x of rel) if (x?.name) names.push(x.name);
+      } else if (rel.name) {
+        names.push(rel.name);
+      }
+    }
+    return {
+      id: r.id,
+      name: r.name,
+      servings: r.servings,
+      tags: r.tags ?? [],
+      ingredient_names: names,
+    };
+  });
+
+  const recipeNameById = new Map<string, string>();
+  for (const r of recipes) recipeNameById.set(r.id, r.name);
+
+  const days = weekDates(monday).map((d) => toISODate(d));
 
   return (
     <div className="space-y-4">
@@ -72,45 +105,14 @@ export default async function WochenplanPage({
         </div>
       </div>
 
-      <div className="bg-white border rounded-lg overflow-hidden">
-        <div className="hidden md:grid grid-cols-[8rem_1fr_1fr] text-xs uppercase tracking-wide text-neutral-500 border-b bg-neutral-50">
-          <div className="p-2">Tag</div>
-          <div className="p-2">Mittag</div>
-          <div className="p-2">Abend</div>
-        </div>
-        <ul className="divide-y">
-          {days.map((d, i) => {
-            const dateStr = toISODate(d);
-            const lunch = lookup.get(`${dateStr}__lunch`);
-            const dinner = lookup.get(`${dateStr}__dinner`);
-            return (
-              <li
-                key={dateStr}
-                className="md:grid md:grid-cols-[8rem_1fr_1fr] p-2 md:p-0"
-              >
-                <div className="md:p-3">
-                  <div className="font-medium">{WEEKDAY_LABELS[i]}</div>
-                  <div className="text-xs text-neutral-500">
-                    {formatDateShort(d)}
-                  </div>
-                </div>
-                <SlotCell
-                  date={dateStr}
-                  slot="lunch"
-                  entry={lunch}
-                  recipes={recipes}
-                />
-                <SlotCell
-                  date={dateStr}
-                  slot="dinner"
-                  entry={dinner}
-                  recipes={recipes}
-                />
-              </li>
-            );
-          })}
-        </ul>
-      </div>
+      <WeekGrid
+        days={days}
+        weekdayLabels={WEEKDAY_LABELS}
+        dayLabels={weekDates(monday).map((d) => formatDateShort(d))}
+        plans={plans}
+        recipes={recipes}
+        recipeNameById={Array.from(recipeNameById.entries())}
+      />
 
       <div className="text-right">
         <Link
@@ -120,27 +122,6 @@ export default async function WochenplanPage({
           Einkaufszettel öffnen →
         </Link>
       </div>
-    </div>
-  );
-}
-
-function SlotCell({
-  date,
-  slot,
-  entry,
-  recipes,
-}: {
-  date: string;
-  slot: Slot;
-  entry: MealPlanEntry | undefined;
-  recipes: Pick<Recipe, "id" | "name" | "servings">[];
-}) {
-  return (
-    <div className="md:p-3 md:border-l">
-      <div className="md:hidden text-xs text-neutral-500 mt-2 mb-1">
-        {slot === "lunch" ? "Mittag" : "Abend"}
-      </div>
-      <SlotEditor date={date} slot={slot} entry={entry} recipes={recipes} />
     </div>
   );
 }
