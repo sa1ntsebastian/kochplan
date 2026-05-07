@@ -32,6 +32,7 @@ export async function POST(req: NextRequest) {
   const protein_per_100 = numOrNull(body.protein_per_100);
   const carbs_per_100 = numOrNull(body.carbs_per_100);
   const fat_per_100 = numOrNull(body.fat_per_100);
+  const grams_per_piece = unit === "stk" ? numOrNull(body.grams_per_piece) : null;
   const aliases = Array.isArray(body.units)
     ? (body.units as { label: string; factor: number | string }[])
         .map((u, i) => ({
@@ -60,6 +61,7 @@ export async function POST(req: NextRequest) {
       protein_per_100,
       carbs_per_100,
       fat_per_100,
+      grams_per_piece,
     })
     .select("*")
     .single();

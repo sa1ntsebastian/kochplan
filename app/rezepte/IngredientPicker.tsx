@@ -153,6 +153,7 @@ function NewIngredientForm({
   const [name, setName] = useState(initialName);
   const [unit, setUnit] = useState<Unit>("g");
   const [category, setCategory] = useState<Category>("sonstiges");
+  const [gramsPerPiece, setGramsPerPiece] = useState("");
   const [kcal, setKcal] = useState("");
   const [protein, setProtein] = useState("");
   const [carbs, setCarbs] = useState("");
@@ -210,6 +211,7 @@ function NewIngredientForm({
           name: name.trim(),
           unit,
           category,
+          grams_per_piece: unit === "stk" ? gramsPerPiece : null,
           kcal_per_100: kcal,
           protein_per_100: protein,
           carbs_per_100: carbs,
@@ -277,6 +279,28 @@ function NewIngredientForm({
           </select>
         </label>
       </div>
+
+      {unit === "stk" && (
+        <div className="border-t pt-2">
+          <label className="text-xs block">
+            Gewicht pro Stück (g){" "}
+            <span className="text-neutral-400">(optional)</span>
+            <input
+              type="number"
+              step="0.1"
+              min={0}
+              value={gramsPerPiece}
+              onChange={(e) => setGramsPerPiece(e.target.value)}
+              placeholder="z.B. 60 für ein Ei"
+              className="mt-0.5 w-full border rounded px-2 py-1.5"
+            />
+          </label>
+          <div className="text-xs text-neutral-400 mt-1">
+            Brücke zwischen Stück und Gramm — nötig, damit Nährwerte
+            (pro 100 g) ausgewertet werden können.
+          </div>
+        </div>
+      )}
 
       {unit !== "stk" && (
         <div className="border-t pt-2 space-y-1">

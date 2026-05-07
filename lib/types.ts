@@ -30,6 +30,7 @@ export interface Ingredient {
   protein_per_100: number | null;
   carbs_per_100: number | null;
   fat_per_100: number | null;
+  grams_per_piece: number | null;
   created_at: string;
   units?: IngredientUnit[];
 }
