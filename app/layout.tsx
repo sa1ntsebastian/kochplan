@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Suspense } from "react";
 import { cookies } from "next/headers";
 import "./globals.css";
 import { AUTH_COOKIE } from "@/lib/auth";
+import SavedToast from "./components/SavedToast";
 
 export const metadata: Metadata = {
   title: "Kochplan",
@@ -48,6 +50,9 @@ export default async function RootLayout({
             </nav>
           </header>
         )}
+        <Suspense fallback={null}>
+          <SavedToast />
+        </Suspense>
         <main className="flex-1 max-w-4xl mx-auto px-4 py-6 w-full">
           {children}
         </main>

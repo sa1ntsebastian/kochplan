@@ -163,7 +163,7 @@ export default function RecipeForm({
         };
         if (recipeId) {
           await updateRecipe(recipeId, payload);
-          router.push(`/rezepte/${recipeId}`);
+          router.push(`/rezepte/${recipeId}?saved=saved`);
           router.refresh();
         } else {
           await createRecipe(payload);

@@ -46,7 +46,7 @@ export async function createRecipe(input: {
   }
 
   revalidatePath("/rezepte");
-  redirect(`/rezepte/${recipe.id}`);
+  redirect(`/rezepte/${recipe.id}?saved=created`);
 }
 
 export async function updateRecipe(
